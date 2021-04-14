@@ -56,13 +56,21 @@ class Block:
         self.restrictions = []                      # Restrictions that needed to be ensured during the execution
 
     def add_state(self, state):
-        self.states.append(state)
+
+        last_state = self.states[-1]
+        if last_state != state:
+
+            #if last_state == State.ESCAPE and state == State.SATISFIED:
+            #    self.states.append(State.ESCAPE)
+
+            self.states.append(state)
 
     def add_restriction(self, block_id):
         self.restrictions.append(block_id)
 
     def clear_restrictions(self):
         self.restrictions = []
+        self.agression = None
 
 
 def is_satisfied(current_block):
@@ -145,10 +153,13 @@ def do_agression(current_block, towers):
     """
     top = current_block.top
     top.agression = current_block
-    top.add_state(State.SEEK_ESCAPE)
     top.add_restriction(current_block.objective)
 
-    return try_satisfy(top, towers)
+    if try_satisfy(top, towers):
+        top.clear_restrictions()
+        return True
+    else:
+        return False
 
 
 def do_satisfy(current_block, towers):
@@ -177,6 +188,9 @@ def do_satisfy(current_block, towers):
                 put_on_empty_tower(current_block, tower)
 
                 # Satisfy the block
+                if current_block.agression:
+                    current_block.add_state(State.ESCAPE)
+
                 current_block.add_state(State.SATISFIED)
 
                 return True
@@ -196,6 +210,9 @@ def do_satisfy(current_block, towers):
                     put_on_top_of_block(current_block, l_block, tower)
 
                     # Satisfy the block
+                    if current_block.agression:
+                        current_block.add_state(State.ESCAPE)
+
                     current_block.add_state(State.SATISFIED)
 
                     return True
@@ -227,6 +244,10 @@ def make_movement(current_block, towers):
                 # Put on empty tower ! No satisfaction !
                 put_on_empty_tower(current_block, tower)
 
+                # Change the state to ESCAPE
+                if current_block.agression:
+                    current_block.add_state(State.ESCAPE)
+
                 return True
         else:
             # In case we have the block to be placed above a block, we need to test if it is the objective
@@ -244,7 +265,14 @@ def make_movement(current_block, towers):
                     # Put on top of a new block ! No satisfaction !
                     put_on_top_of_block(current_block, l_block, tower)
 
+                    # Change the state to ESCAPE
+                    if current_block.agression:
+                        current_block.add_state(State.ESCAPE)
+
                     return True
+
+    # Fatal Error ! God Help me !
+    return False
 
 
 def try_satisfy(current_block, towers):
@@ -257,12 +285,17 @@ def try_satisfy(current_block, towers):
     :return:
     """
 
+    if not current_block.agression:
+        current_block.add_state(State.SEEK_SATISFACTION)
+    else:
+        current_block.add_state(State.SEEK_ESCAPE)
+
     # Check if there is blockings in the way. If there is, assault the block that is blocking the movement !
     if not current_block.top:
 
         # If we can't satisfy the objective, we will do a mandatory movement, in order to release new places
         if not do_satisfy(current_block, towers):
-            make_movement(current_block, towers)
+            return make_movement(current_block, towers)
 
     else:
         # There is blocks. Assault the block immediatelly above !
@@ -286,6 +319,9 @@ def eco_resolution(blocks, towers):
         # For each block in the problem, try to satisfy !
         for block in blocks:
 
+            # Print the towers and blocks
+            print_towers(towers)
+
             # If it is already satisfied, continue and get the next block !
             if is_satisfied(block):
                 num_satisfied -= 1
@@ -293,17 +329,34 @@ def eco_resolution(blocks, towers):
                 # If it is not satisfied, try to satisfy and assaulted them if necessary
                 try_satisfy(block, towers)
 
-                # Print the towers and blocks
-                print_towers(towers)
-
 
 def print_towers(towers):
+
+    print("\n---------------------------------------------------------------------------------------")
+
     for tower in towers:
 
-        print(f"\nTorre {tower.id}: ", end='')
+        print(f"\n{tower.id}: ", end='')
 
         for block in tower.blocks:
-            print(f"{block.id} {block.restrictions} - {block.states} # ", end='')
+            print(f"{block.id} - Restri.: {block.restrictions}", end='')
+            print(' - Estados [', end="")
+
+            for state in block.states:
+                if state == State.SEEK_SATISFACTION:
+                    print("'BS'", end="")
+                elif state == State.SATISFIED:
+                    print("'S'", end="")
+                elif state == State.SEEK_ESCAPE:
+                    print("'BF'", end="")
+                elif state == State.ESCAPE:
+                    print("'F'", end="")
+                elif state == State.ATTACK:
+                    print("'A'", end="")
+
+                print(",", end="")
+
+            print("] ### ", end='')
 
     print("\n")
 
