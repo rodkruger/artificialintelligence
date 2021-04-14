@@ -41,7 +41,7 @@ class Tower:
         self.blocks.pop()
 
 
-# Defines a block that could be moved during the execution. We can understad that each block
+# Defines a block that could be moved during the execution. We can understand that each block
 # actually is an intelligent agent looking for objectives
 class Block:
 
@@ -50,7 +50,7 @@ class Block:
         self.objective = objective                  # Target objective
         self.tower = None                           # Actual tower
         self.bottom = None                          # Block immediately below
-        self.top = None                             # Block immediatley above
+        self.top = None                             # Block immediately above
         self.states = [State.SEEK_SATISFACTION]     # States that each block will pass through the execution
         self.agression = None                       # Which block triggerred an agression
         self.restrictions = []                      # Restrictions that needed to be ensured during the execution
@@ -365,8 +365,8 @@ b = Block("B", "T3")
 c = Block("C", "B")
 
 a.bottom = None; a.top = b
-b.bottom = a; b.top = c
-c.bottom = b; c.top = None
+b.bottom = a;    b.top = c
+c.bottom = b;    c.top = None
 
 t1 = Tower("T1", [])
 t2 = Tower("T2", [a, b, c])
