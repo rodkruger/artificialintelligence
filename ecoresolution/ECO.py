@@ -59,10 +59,6 @@ class Block:
 
         last_state = self.states[-1]
         if last_state != state:
-
-            #if last_state == State.ESCAPE and state == State.SATISFIED:
-            #    self.states.append(State.ESCAPE)
-
             self.states.append(state)
 
     def add_restriction(self, block_id):
